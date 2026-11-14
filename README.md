@@ -1,5 +1,8 @@
 # Day 06 · Data Lab · Field-to-Release PoC (AI20K · Data Track)
 
+> **Nhóm T08:** Bản tích hợp và lệnh demo ở [docs/T08_DEMO.md](docs/T08_DEMO.md).
+> Pipeline T08 đã nối các module; kết quả kiểm tra ở [reports/integration_check.md](reports/integration_check.md).
+
 Starter repo cho bài lab **Data Pipeline, Privacy & Production PoC**: 14 challenge (T01–T14), một contract chung.
 Repo cung cấp **dữ liệu offline + hạ tầng dùng chung + metric chuẩn + template báo cáo** để nhóm tập trung vào phần quan trọng:
 vấn đề, baseline, thuật toán, đánh giá trung thực, human-in-the-loop và quyết định GO/HOLD/REWORK.

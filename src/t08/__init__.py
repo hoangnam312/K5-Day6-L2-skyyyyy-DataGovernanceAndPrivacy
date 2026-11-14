@@ -1,1 +1,1 @@
-"""T08 team scaffolding; see docs/T08_TEAM_PLAN.md. Algorithms remain TODO."""
+"""Integrated T08 modules; handoff: docs/T08_TEAM_PLAN.md; run: docs/T08_DEMO.md."""

@@ -1,0 +1,12 @@
+track_config: tracks/t08.yaml
+track: t08
+group_id: skyyyy
+owner: "Dương Quốc Anh"
+input: fixtures/t08_deletion
+output: out/poc
+seed: 42
+offline: true
+strict_provenance: true
+params:
+  actor: data-platform
+  dry_run: false

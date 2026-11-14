@@ -2,3 +2,9 @@
 /fixtures/t08_deletion/*.json text eol=lf
 /examples/t08_demo/*.json text eol=lf
 /examples/t08_demo/*.csv text eol=lf
+# All starter manifests hash the exact LF bytes of their text inputs.
+/fixtures/**/*.csv text eol=lf
+/fixtures/**/*.json text eol=lf
+/fixtures/**/*.yaml text eol=lf
+/fixtures/**/*.txt text eol=lf
+/fixtures/**/*.md text eol=lf

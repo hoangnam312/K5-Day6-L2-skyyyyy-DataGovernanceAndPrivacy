@@ -1,0 +1,10 @@
+{
+  "source": "hand-authored development example",
+  "official_instructor_score": false,
+  "n_requests": 2,
+  "n_artefacts": 9,
+  "n_expected_request_artefact_pairs": 10,
+  "mode": "prediction/dry-run; no real human review, no execution",
+  "expected_actions": "examples/t08_demo/expected_actions.csv",
+  "output": "out/selfcheck_20261114_170326_437300"
+}

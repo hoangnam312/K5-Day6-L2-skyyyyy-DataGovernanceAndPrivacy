@@ -1,6 +1,7 @@
-# T08 — Phân công và cách bàn giao nhóm skyyyyy
+# T08 — Phân công và cách bàn giao nhóm skyyyy
 
-Owner quyết định cuối: **LeVanKhoi**. Bốn phần còn lại được bốc ngẫu nhiên:
+Owner quyết định cuối theo config nhóm: **Dương Quốc Anh**. LeVanKhoi phụ trách
+tích hợp/input/baseline. Bốn phần còn lại được bốc ngẫu nhiên:
 Núi (lineage), Vinh (policy), Anh (review), Nam (executor/audit/evaluation).
 Đã ghi tên vào reports/team_contributions.csv; Git name/email vẫn cần từng
 thành viên điền đúng danh tính commit thực tế.
@@ -11,10 +12,11 @@ Tình huống: người dùng bấm yêu cầu xóa trên app. Hệ thống tìm
 quan, xét ngoại lệ, cho người duyệt rồi mô phỏng xóa và ghi bằng chứng.
 Input là requests.json (10 request), data_graph.json (212 artefact).
 
-Đã có: config T08, sửa LF cho fixture, loader đọc JSON và kiểm ID.
-Các thuật toán còn TODO; chỉ load_input() đã nối vào pipeline. Chạy hiện
-dừng status=3 tại process(), chưa có output/metric hoàn chỉnh. Đây là khung
-được chuẩn bị với hỗ trợ AI, không phải bài giải đã xong của các thành viên.
+Đã lấy code lineage, policy, review và executor từ Git nhóm. Review được
+chuyển từ src/human_review.py sang đúng src/t08/human_review.py để import hợp lệ.
+Loader, baseline và pipeline đã được tích hợp từ bản tham khảo có hỗ trợ AI.
+Xem docs/T08_DEMO.md để chạy dry-run, review và thực hiện mock. Kết quả chấm
+chính thức vẫn cần GT giảng viên; không coi số quyết định là điểm đánh giá.
 
 ## Phân công 5 người
 
@@ -74,8 +76,8 @@ run      -> execute_mock() sau review, trước xuất kết quả cuối
 decide   -> quyết định chung kèm reason_code + owner
 ```
 
-Các bước sau load CHƯA nối. Khi ghép phải kiểm tra ràng buộc và quyết định
-chưa được duyệt; không thay toàn bộ HOLD bằng GO để demo trông thành công.
+Các bước đã nối. Kiểm tra ràng buộc và quyết định chưa được duyệt;
+không thay toàn bộ HOLD bằng GO để demo trông thành công.
 Không cần sửa main.py/evaluator. Không sửa manifest hay tắt strict_provenance.
 
 ## Việc bắt đầu ngay
@@ -105,8 +107,8 @@ Những lần sau chỉ cần:
 .\.venv\Scripts\python.exe -m src.main --offline --seed 42
 ```
 
-Hiện dự kiến thấy `[load] T08: 10 requests, 212 artefacts` rồi status=3 vì
-process chưa implement. Không coi là đã hoàn thành PoC. Repo hướng dẫn Python
+Hiện dự kiến thấy `[load] T08: 10 requests, 212 artefacts` rồi status=0 khi
+chạy hoàn tất. HOLD/DRY_RUN_ONLY là quyết định nghiệp vụ hợp lệ. Repo hướng dẫn Python
 3.11–3.13; ghi đúng phiên bản thực dùng của máy khi báo cáo.
 
 ## Git và bằng chứng

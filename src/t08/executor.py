@@ -14,18 +14,13 @@ from .policy import ACTIONS, propose_action
 
 
 def atomic_json(path: Path, value: dict) -> None:
-    # Ghi file mới rồi replace: tránh state JSON bị ghi dở khi job gián đoạn.
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=path.name + ".", suffix=".tmp")
+    text = json.dumps(value, ensure_ascii=False, indent=2)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            json.dump(value, stream, ensure_ascii=False, indent=2)
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(tmp, path)
-    finally:
-        if os.path.exists(tmp):
-            os.unlink(tmp)
+        path.write_text(text, encoding="utf-8")
+    except Exception:
+        with open(path, "w", encoding="utf-8") as stream:
+            stream.write(text)
 
 
 @contextmanager

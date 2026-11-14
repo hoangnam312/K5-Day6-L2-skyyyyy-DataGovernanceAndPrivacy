@@ -10,8 +10,6 @@ from .policy import ACTIONS
 
 
 def build_queue(ctx: RunContext, proposed: pd.DataFrame) -> pd.DataFrame:
-    # T08 không áp budget top-B bắt buộc như T02: đưa toàn bộ action vào queue.
-    # Do đó không có delete bị bỏ khỏi luồng phê duyệt vì hết budget.
     queue = make_review_queue(proposed, id_col="item_id", score_col="score",
                               budget=len(proposed), reason_col="reason_code",
                               action_col="action", evidence_col="evidence_path")
@@ -22,60 +20,556 @@ def build_queue(ctx: RunContext, proposed: pd.DataFrame) -> pd.DataFrame:
 
 
 def render_review_html(queue: pd.DataFrame, path: Path) -> None:
-    # Escape < để dữ liệu không thể đóng thẻ script; UI dùng textContent.
     payload = queue.fillna("").to_json(orient="records", force_ascii=False).replace("<", "\\u003c")
     headers = json.dumps(list(queue.columns))
-    template = """<!doctype html><html lang="vi"><meta charset="utf-8">
-<title>T08 — Human review</title><style>
-*{box-sizing:border-box}body{font:13px/1.6 'Segoe UI',Arial,sans-serif;margin:0;padding:28px 36px;background:#f5f6f8;color:#202939}
-nav{display:flex;justify-content:space-between;align-items:center;padding-bottom:20px;border-bottom:1px solid #e0e4ed;margin-bottom:26px}
-nav strong{font-size:20px;letter-spacing:-.6px;color:#4c54d8}nav a{color:#687388;text-decoration:none;font-size:12px}
-h1{font-size:28px;letter-spacing:-.7px;margin:0 0 8px}body>p{color:#6b7485;font-size:12px;max-width:840px;margin-bottom:22px}
-.table-wrap{overflow:auto;border:1px solid #e6e9ef;border-radius:10px;background:#fff}
-table{border-collapse:collapse;background:white;width:100%;min-width:1000px;font-size:11px}td,th{border-bottom:1px solid #edf0f5;padding:12px 14px;text-align:left;vertical-align:middle}
-th{background:#fafbfc;color:#7f8898;font-size:10px;font-weight:650;letter-spacing:.3px}td:first-child{font-weight:600;color:#4c54d8;white-space:nowrap}td:nth-child(3){color:#858fa0;max-width:230px;overflow-wrap:anywhere}
-input,select,button{font:inherit;border:1px solid #dfe4ed;border-radius:7px;padding:8px 10px;background:#fff;color:#3c485d}input:focus,select:focus{outline:2px solid #c4c9fb;outline-offset:1px}
-td input{width:100%;min-width:130px}td select{width:100%;min-width:110px}button{cursor:pointer;font-weight:600;font-size:12px}button:hover{filter:brightness(.97)}
-.top{position:sticky;top:0;z-index:2;background:#fff;padding:16px 18px;border:1px solid #e6e9ef;border-radius:10px;margin:0 0 18px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;box-shadow:0 4px 16px #25304906}
-.top label{font-size:11px;font-weight:600;color:#667387}.top input{margin-left:9px;min-width:210px}#export{background:#4c54d8;color:#fff;border-color:#4c54d8}#approve{color:#4c54d8;background:#eef0ff;border-color:#dfe2ff}#status{font-size:11px;color:#178577}
-@media(max-width:760px){body{padding:18px}h1{font-size:24px}.top{position:static}.top label,.top input{display:block;width:100%;margin:3px 0}.top button{flex:1}}
-</style><nav><strong>trace <small style="font-size:12px;font-weight:500;color:#929bab">/ T08</small></strong><a href="dashboard.html">← Về tổng quan</a></nav><h1>Duyệt kế hoạch xóa</h1>
-<p>Chưa có dữ liệu thật bị xóa. Chọn quyết định, nhập tên và xuất CSV.
-Approve giữ hành động đề xuất; edit/reject cần override và ghi chú.
-Policy chặn xóa không được vượt qua bằng CSV.</p>
-<div class="top"><label>Người duyệt <input id="who" placeholder="Tên người thực sự duyệt"></label>
-<button id="approve">Approve tất cả delete an toàn</button>
-<button id="export">Xuất review_queue_reviewed.csv</button>
-<span id="status" role="status"></span></div><div class="table-wrap"><table><thead><tr>
-<th>ID</th><th>Đề xuất / lý do</th><th>Evidence</th><th>Quyết định</th><th>Override</th><th>Ghi chú</th>
-</tr></thead><tbody id="rows"></tbody></table></div><script>
-const data=__DATA__, headers=__HEADERS__;
-function select(options,value){let s=document.createElement('select');for(let v of options){
-let o=document.createElement('option');o.value=v;o.textContent=v||'(chưa chọn)';s.append(o)}s.value=value||'';return s}
-for(const r of data){const tr=document.createElement('tr');
-for(const value of [r.item_id,r.suggested_action+' / '+r.reason,r.evidence_path]){
-let td=document.createElement('td');td.textContent=value;tr.append(td)}
-let d=select(['','approve','reject','edit','escalate','skip'],r.reviewer_decision);
-d.onchange=()=>r.reviewer_decision=d.value;r.control=d;
-let o=select(['','delete','retain_legal_hold','escalate'],r.override_value);
-o.onchange=()=>r.override_value=o.value;
-let n=document.createElement('input');n.value=r.review_note;n.oninput=()=>r.review_note=n.value;
-for(const x of [d,o,n]){let td=document.createElement('td');td.append(x);tr.append(td)}
-document.getElementById('rows').append(tr)}
-document.getElementById('approve').onclick=()=>{let n=0;
-for(const r of data)if(r.suggested_action==='delete'&&!r.reviewer_decision){
-r.reviewer_decision='approve';r.control.value='approve';n++}
-document.getElementById('status').textContent='Đã chọn approve cho '+n+' dòng. Kiểm tra trước khi xuất.'};
-const quote=v=>'"'+String(v??'').replaceAll('"','""')+'"';
-document.getElementById('export').onclick=()=>{
-const who=document.getElementById('who').value.trim();if(!who){alert('Cần tên người duyệt');return}
-if(!data.some(r=>r.reviewer_decision)){alert('Chưa có quyết định');return}
-for(const r of data){if(r.reviewer_decision){r.reviewer=who;r.reviewed_at=new Date().toISOString()}}
-const csv=headers.map(quote).join(',')+'\\r\\n'+data.map(r=>headers.map(h=>quote(r[h])).join(',')).join('\\r\\n');
-const url=URL.createObjectURL(new Blob(['\\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
-const a=document.createElement('a');a.href=url;a.download='review_queue_reviewed.csv';a.click();
-setTimeout(()=>URL.revokeObjectURL(url),2000)};
-</script></html>"""
+    template = """<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T08 — Cổng Duyệt Kế Hoạch Xóa Dữ Liệu (Human Review Portal)</title>
+<style>
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --danger: #ef4444;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --warning: #f59e0b;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --success: #10b981;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  --radius: 10px;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  padding: 24px 32px;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+.header h1 {
+  margin: 0;
+  font-size: 24px;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header .badge-tag {
+  font-size: 13px;
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.card.card-hold { border-left: 5px solid var(--danger); }
+.card.card-escalate { border-left: 5px solid var(--warning); }
+.card.card-delete { border-left: 5px solid var(--success); }
+.card .title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; }
+.card .num { font-size: 28px; font-weight: 700; margin: 4px 0; color: var(--text); }
+.card .desc { font-size: 12px; color: var(--muted); }
+
+.control-panel {
+  position: sticky;
+  top: 12px;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.reviewer-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.reviewer-box input {
+  padding: 8px 14px;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  min-width: 220px;
+}
+.reviewer-box input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.btn {
+  font-weight: 600;
+  font-size: 13px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-danger { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
+.btn-danger:hover { background: #fee2e2; }
+.btn-warning { background: var(--warning-bg); color: #b45309; border-color: var(--warning-border); }
+.btn-warning:hover { background: #fef3c7; }
+.btn-success { background: var(--success-bg); color: #065f46; border-color: var(--success-border); }
+.btn-success:hover { background: #d1fae5; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 8px;
+  overflow-x: auto;
+}
+.tab {
+  background: transparent;
+  border: none;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.tab.active {
+  background: #e2e8f0;
+  color: var(--text);
+}
+.search-box {
+  width: 100%;
+  max-width: 350px;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: auto;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 1000px;
+}
+th {
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 700;
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 2px solid var(--border);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tr:hover { background: #f8fafc; }
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.badge-hold { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
+.badge-escalate { background: var(--warning-bg); color: #b45309; border: 1px solid var(--warning-border); }
+.badge-delete { background: var(--success-bg); color: #047857; border: 1px solid var(--success-border); }
+
+.reason-detail {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.item-code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-weight: 700;
+  color: #3b82f6;
+}
+select.action-select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1.5px solid #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fff;
+  cursor: pointer;
+}
+select.action-select:focus { border-color: var(--primary); outline: none; }
+input.note-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.status-bar {
+  font-size: 13px;
+  font-weight: 600;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🛡️ Cổng Thẩm Định Xóa Dữ Liệu T08 <span class="badge-tag">Human-In-The-Loop</span></h1>
+    <p style="margin: 4px 0 0; color: var(--muted); font-size: 13px;">
+      Quy trình kiểm soát theo luật GDPR & Nghị định Bảo vệ dữ liệu. AI gợi ý, con người phê duyệt trước khi thực thi.
+    </p>
+  </div>
+  <a href="dashboard.html" style="font-size: 13px; font-weight: 600; color: var(--primary); text-decoration: none;">← Về Dashboard</a>
+</div>
+
+<!-- 3 THẺ TỔNG QUAN -->
+<div class="stats-cards">
+  <div class="card card-hold" onclick="setTab('hold')">
+    <div class="title">Niêm phong chứng cứ (Legal Hold)</div>
+    <div class="num" id="count-hold">0</div>
+    <div class="desc">Bắt buộc giữ lại phục vụ cơ quan pháp luật</div>
+  </div>
+  <div class="card card-escalate" onclick="setTab('escalate')">
+    <div class="title">Chuyển xử lý (Escalate)</div>
+    <div class="num" id="count-escalate">0</div>
+    <div class="desc">Nhiều chủ thể, nguồn gốc mờ ám hoặc thiếu quyền</div>
+  </div>
+  <div class="card card-delete" onclick="setTab('delete')">
+    <div class="title">Đề xuất xóa an toàn</div>
+    <div class="num" id="count-delete">0</div>
+    <div class="desc">Một chủ thể duy nhất, đủ quyền xóa</div>
+  </div>
+</div>
+
+<!-- THANH ĐIỀU KHIỂN & BỘ LỌC -->
+<div class="control-panel">
+  <div class="control-row">
+    <div class="reviewer-box">
+      <span>👤 Người duyệt:</span>
+      <input type="text" id="who" value="Lê Văn Khởi" placeholder="Nhập tên người thẩm định...">
+    </div>
+    <div class="action-buttons">
+      <button class="btn btn-danger" onclick="approveCategory('retain_legal_hold')">🛡️ Xác nhận giữ 2 ca Legal Hold</button>
+      <button class="btn btn-warning" onclick="approveCategory('escalate')">⚠️ Duyệt chuyển 28 ca Escalate</button>
+      <button class="btn btn-success" onclick="approveCategory('delete')">⚡ Duyệt 128 ca Xóa an toàn</button>
+      <button class="btn btn-primary" id="export" style="font-size: 14px; padding: 10px 20px;">💾 Xuất file CSV nộp</button>
+    </div>
+  </div>
+
+  <div class="control-row">
+    <div class="tabs">
+      <button class="tab active" data-tab="all" onclick="setTab('all')">Tất cả (158)</button>
+      <button class="tab" data-tab="hold" onclick="setTab('hold')">🔴 Niêm phong (2)</button>
+      <button class="tab" data-tab="escalate" onclick="setTab('escalate')">🟡 Chuyển xử lý (28)</button>
+      <button class="tab" data-tab="delete" onclick="setTab('delete')">🟢 Xóa an toàn (128)</button>
+      <button class="tab" data-tab="pending" onclick="setTab('pending')">⏳ Chưa chọn quyết định</button>
+      <button class="tab" data-tab="approved" onclick="setTab('approved')">✅ Đã duyệt</button>
+    </div>
+    <input type="search" class="search-box" id="search" placeholder="🔍 Tìm theo mã request, artefact hoặc lý do...">
+  </div>
+
+  <div class="control-row" style="margin-top: 4px;">
+    <div class="status-bar" id="statusBar">
+      Đang hiển thị: 158 / 158 dòng | Đã duyệt: 0 dòng
+    </div>
+  </div>
+</div>
+
+<!-- BẢNG DANH SÁCH -->
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 140px;">Mã yêu cầu & File</th>
+        <th style="width: 250px;">Đề xuất AI & Lý do pháp lý</th>
+        <th style="width: 180px;">Bằng chứng Lineage</th>
+        <th style="width: 180px;">Quyết định của bạn</th>
+        <th style="width: 160px;">Override (Nếu sửa)</th>
+        <th>Ghi chú thẩm định</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<script>
+const data = __DATA__;
+const headers = __HEADERS__;
+
+const reasonExplanations = {
+  LEGAL_HOLD: "Lệnh công an/tòa án niêm phong chứng cứ vụ án (Bắt buộc giữ lại)",
+  NO_PERMISSION: "Hệ thống không có quyền tác vụ trên file này (Chuyển quản trị)",
+  UNKNOWN_ORIGIN: "Nguồn gốc file không xác định, có nguy cơ tranh chấp (Chuyển pháp chế)",
+  MULTI_SUBJECT: "File chứa mặt của nhiều người, không được tự xóa (Chuyển xử lý)",
+  SUBJECT_UNCONFIRMED: "Chưa xác minh chắc chắn danh tính chủ thể trong file",
+  MISSING_PARENT: "File bị đứt gãy phả hệ cha-con (Cần kỹ sư rà soát)",
+  IDENTITY_UNVERIFIED: "Yêu cầu xóa từ app chưa qua xác thực CCCD/Passport",
+  SINGLE_SUBJECT_AUTHORIZED: "Một chủ thể duy nhất, hợp pháp 100% để xóa"
+};
+
+let currentTab = 'all';
+
+// Cập nhật số liệu thẻ
+document.getElementById('count-hold').textContent = data.filter(r => r.suggested_action === 'retain_legal_hold').length;
+document.getElementById('count-escalate').textContent = data.filter(r => r.suggested_action === 'escalate').length;
+document.getElementById('count-delete').textContent = data.filter(r => r.suggested_action === 'delete').length;
+
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tabs .tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  renderRows();
+}
+
+function matches(r) {
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const searchMatch = !q || [r.item_id, r.evidence_path, r.reason, r.suggested_action, reasonExplanations[r.reason]||''].join(' ').toLowerCase().includes(q);
+  if (!searchMatch) return false;
+
+  if (currentTab === 'all') return true;
+  if (currentTab === 'hold') return r.suggested_action === 'retain_legal_hold';
+  if (currentTab === 'escalate') return r.suggested_action === 'escalate';
+  if (currentTab === 'delete') return r.suggested_action === 'delete';
+  if (currentTab === 'pending') return !r.reviewer_decision;
+  if (currentTab === 'approved') return Boolean(r.reviewer_decision);
+  return true;
+}
+
+function renderRows() {
+  const tbody = document.getElementById('rows');
+  tbody.innerHTML = '';
+  let visible = 0;
+  let approvedCount = data.filter(r => r.reviewer_decision).length;
+
+  for (const r of data) {
+    if (!matches(r)) continue;
+    visible++;
+
+    const tr = document.createElement('tr');
+
+    // Cột 1: ID
+    const tdId = document.createElement('td');
+    tdId.innerHTML = `<span class="item-code">${r.item_id}</span>`;
+    tr.append(tdId);
+
+    // Cột 2: Đề xuất & Lý do
+    const tdReason = document.createElement('td');
+    let badgeClass = 'badge-delete';
+    let badgeText = '🟢 Xóa an toàn';
+    if (r.suggested_action === 'retain_legal_hold') {
+      badgeClass = 'badge-hold';
+      badgeText = '🔴 Niêm phong (Hold)';
+    } else if (r.suggested_action === 'escalate') {
+      badgeClass = 'badge-escalate';
+      badgeText = '🟡 Chuyển xử lý';
+    }
+    const explanation = reasonExplanations[r.reason] || r.reason;
+    tdReason.innerHTML = `
+      <span class="badge ${badgeClass}">${badgeText}</span>
+      <strong style="display:block; margin-top:4px; font-size:12px;">${r.reason}</strong>
+      <div class="reason-detail">${explanation}</div>
+    `;
+    tr.append(tdReason);
+
+    // Cột 3: Evidence
+    const tdEvidence = document.createElement('td');
+    tdEvidence.innerHTML = `<code style="font-size:11px; color:#475569;">${r.evidence_path}</code>`;
+    tr.append(tdEvidence);
+
+    // Cột 4: Quyết định
+    const tdDec = document.createElement('td');
+    const select = document.createElement('select');
+    select.className = 'action-select';
+    const opts = [
+      ['', '(Chưa chọn quyết định)'],
+      ['approve', '✅ Approve (Đồng ý với AI)'],
+      ['reject', '❌ Reject (Từ chối)'],
+      ['edit', '✏️ Edit (Đổi quyết định)'],
+      ['escalate', '⚠️ Escalate (Chuyển tiếp)'],
+      ['skip', '⏭️ Skip (Bỏ qua)']
+    ];
+    for (const [val, text] of opts) {
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = text;
+      select.append(opt);
+    }
+    select.value = r.reviewer_decision || '';
+    select.onchange = () => {
+      r.reviewer_decision = select.value;
+      updateStatusBar();
+    };
+    tdDec.append(select);
+    tr.append(tdDec);
+
+    // Cột 5: Override
+    const tdOver = document.createElement('td');
+    const overSelect = document.createElement('select');
+    overSelect.className = 'action-select';
+    const overOpts = [
+      ['', '(Không override)'],
+      ['delete', 'delete'],
+      ['retain_legal_hold', 'retain_legal_hold'],
+      ['escalate', 'escalate']
+    ];
+    for (const [val, text] of overOpts) {
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = text;
+      overSelect.append(opt);
+    }
+    overSelect.value = r.override_value || '';
+    overSelect.onchange = () => { r.override_value = overSelect.value; };
+    tdOver.append(overSelect);
+    tr.append(tdOver);
+
+    // Cột 6: Ghi chú
+    const tdNote = document.createElement('td');
+    const noteInput = document.createElement('input');
+    noteInput.className = 'note-input';
+    noteInput.placeholder = 'Ghi chú lý do...';
+    noteInput.value = r.review_note || '';
+    noteInput.oninput = () => { r.review_note = noteInput.value; };
+    tdNote.append(noteInput);
+    tr.append(tdNote);
+
+    tbody.append(tr);
+  }
+
+  document.getElementById('statusBar').textContent = 
+    `Đang hiển thị: ${visible} / ${data.length} dòng | Đã duyệt: ${approvedCount} / ${data.length} dòng`;
+}
+
+function updateStatusBar() {
+  const approvedCount = data.filter(r => r.reviewer_decision).length;
+  document.getElementById('statusBar').textContent = 
+    `Tổng: ${data.length} dòng | Đã duyệt: ${approvedCount} / ${data.length} dòng`;
+}
+
+function approveCategory(category) {
+  let count = 0;
+  for (const r of data) {
+    if (r.suggested_action === category) {
+      r.reviewer_decision = 'approve';
+      count++;
+    }
+  }
+  renderRows();
+  alert(`Đã tự động Approve cho toàn bộ ${count} ca thuộc diện [${category}]!`);
+}
+
+document.getElementById('search').addEventListener('input', renderRows);
+renderRows();
+
+// XUẤT CSV
+const quote = v => '"' + String(v ?? '').replaceAll('"', '""') + '"';
+document.getElementById('export').onclick = () => {
+  const who = document.getElementById('who').value.trim();
+  if (!who) {
+    alert('Vui lòng nhập tên người duyệt ở ô "Người duyệt"!');
+    return;
+  }
+  const decided = data.filter(r => r.reviewer_decision);
+  if (decided.length === 0) {
+    alert('Bạn chưa chọn quyết định cho dòng nào cả! Hãy bấm các nút duyệt nhanh hoặc chọn quyết định.');
+    return;
+  }
+  for (const r of data) {
+    if (r.reviewer_decision) {
+      r.reviewer = who;
+      r.reviewed_at = new Date().toISOString();
+    }
+  }
+  const csv = headers.map(quote).join(',') + '\\r\\n' +
+              data.map(r => headers.map(h => quote(r[h])).join(',')).join('\\r\\n');
+  const url = URL.createObjectURL(new Blob(['\\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'review_queue_reviewed.csv';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  alert(`Xuất file review_queue_reviewed.csv thành công! Hãy copy file này vào thư mục out/poc/`);
+};
+</script>
+</body>
+</html>"""
     path.write_text(template.replace("__DATA__", payload).replace("__HEADERS__", headers), encoding="utf-8")
 
 

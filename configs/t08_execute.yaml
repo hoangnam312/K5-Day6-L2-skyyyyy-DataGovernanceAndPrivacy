@@ -1,7 +1,7 @@
 track_config: tracks/t08.yaml
 track: t08
-group_id: skyyyy
-owner: "Dương Quốc Anh"
+group_id: skyyyyy
+owner: "Lê Văn Khởi - Lead"
 input: fixtures/t08_deletion
 output: out/poc
 seed: 42

@@ -27,6 +27,11 @@ xem các đề xuất, chọn quyết định và xuất review_queue_reviewed.c
 tên file vào out/poc/review_queue_reviewed.csv. edit/reject cần override và note.
 Hold/thiếu quyền/ngoại lệ khác không được chuyển thành delete chỉ bằng override.
 
+Dashboard có CSS nhúng để mở offline: thẻ số liệu, tìm/lọc request và chi tiết
+artefact khi bấm mã yêu cầu. Sau mỗi lần chạy lại pipeline, tải lại trang bằng
+F5 để xem kết quả mới. Thẻ “Đã xóa mô phỏng” dùng execution evidence, không
+lấy số đề xuất delete làm số đã thực hiện.
+
 ~~~powershell
 # Áp review nhưng vẫn dry-run:
 .\.venv\Scripts\python.exe -m src.main --offline --seed 42

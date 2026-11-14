@@ -1,6 +1,5 @@
 """LeVanKhoi: nối 5 bước T08; phần riêng nằm trong src/t08/."""
 from __future__ import annotations
-import html
 import json
 
 import pandas as pd
@@ -13,6 +12,7 @@ from .t08.lineage import find_related
 from .t08.policy import POLICY_VERSION, propose_action
 from .t08.human_review import build_queue, apply_review
 from .t08.executor import execute_mock
+from .t08.dashboard import render_dashboard
 
 ACTION_COLUMNS = ["item_id", "request_id", "artefact_id", "subject_id", "artefact_type",
                   "deadline", "uri", "evidence_path", "policy_version", "action",
@@ -123,10 +123,6 @@ def run(ctx: RunContext) -> None:
                        ctx.out("request_summary.csv"), index=False)
     decision = decide(ctx, final)
     write_decision(decision, ctx.out("decision.json"), ctx.out("decision_log.csv"))
-    ctx.out("dashboard.html").write_text(
-        '<!doctype html><meta charset="utf-8"><title>T08 summary</title>'
-        '<h1>T08 — Mock deletion run</h1><p>Operational counts, not official scores.</p>'
-        '<p><a href="review.html">Open human review</a></p><pre>' +
-        html.escape(json.dumps(summary, ensure_ascii=False, indent=2)) + '</pre>', encoding="utf-8")
+    render_dashboard(summary, final, decision, ctx.out("dashboard.html"), ctx.stats.get("n_reviewed", 0))
     print(f"[poc] actions={len(final)} counts={summary['action_counts']}")
     print(f"[decision] {decision.status}: {decision.reason_code}; mock data only")

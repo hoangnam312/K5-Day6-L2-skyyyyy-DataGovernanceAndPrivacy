@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T08 · Theo dõi yêu cầu xóa</title>
+<style>
+:root{--paper:#f5f6f8;--ink:#202939;--muted:#6b7485;--line:#e6e9ef;--indigo:#4c54d8;--indigo-soft:#eef0ff;--teal:#178577;--amber:#a56b11;--rose:#b84c60;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.55 "Segoe UI",Arial,sans-serif}a{color:inherit;text-decoration:none}button,input,select{font:inherit}button,a,input,select{outline-offset:4px}button{cursor:pointer}.app{display:grid;grid-template-columns:224px minmax(0,1fr);min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;border-right:1px solid var(--line);background:#fff;padding:28px 20px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:11px;font-size:22px;font-weight:800;letter-spacing:-.8px}.brand-icon{display:grid;place-items:center;width:35px;height:35px;border-radius:10px;background:var(--indigo);color:#fff;box-shadow:0 4px 12px #4c54d829}.brand small{font-weight:500;color:#8a92a2;font-size:12px;letter-spacing:0;margin-left:5px}.sidebar-caption{font-size:10px;letter-spacing:1.8px;color:#9199a8;font-weight:700;margin:42px 12px 12px}
+.nav{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:8px;color:var(--muted);margin:3px 0}.nav svg{width:18px;height:18px;flex-shrink:0}.nav.active{background:var(--indigo-soft);color:var(--indigo);font-weight:650}.nav:hover{background:#f3f4f9}.nav em{margin-left:auto;font-size:10px;font-style:normal;background:#e0e3ff;padding:1px 6px;border-radius:5px}
+.project{margin-top:auto;border-top:1px solid var(--line);padding-top:20px}.project p{margin:0;color:var(--muted);font-size:11px}.project strong{display:block;font-size:12px;margin:3px 0 12px;overflow-wrap:anywhere}.offline{font-size:11px;color:var(--teal);display:flex;align-items:center;gap:7px}.dot{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+.main{min-width:0;padding:28px 36px 30px;max-width:1800px;width:100%;margin:0 auto}.topline{display:flex;align-items:center;justify-content:space-between;padding-bottom:24px;border-bottom:1px solid var(--line);gap:16px}.breadcrumb{color:var(--muted);font-size:12px}.breadcrumb span{color:var(--ink);font-weight:600}.mode{border:1px solid #d9dfeb;background:#fff;border-radius:20px;padding:5px 11px;font-size:11px;white-space:nowrap;color:#596377}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:28px 0 25px}.eyebrow{font-size:10px;font-weight:750;color:var(--indigo);letter-spacing:1.8px;margin:0 0 7px}h1{font-size:29px;letter-spacing:-.8px;line-height:1.25;margin:0 0 8px;font-weight:700}.subtitle{color:var(--muted);margin:0;font-size:12px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:1px solid var(--line);padding:10px 15px;border-radius:8px;background:#fff;font-weight:600;font-size:12px;white-space:nowrap}.btn.primary{background:var(--indigo);color:#fff;border-color:var(--indigo);box-shadow:0 3px 8px #4c54d820}.btn:hover{filter:brightness(.97)}.btn svg{width:15px;height:15px}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:22px}.card{border:1px solid var(--line);border-radius:12px;background:#fff;padding:19px 20px}.card-label{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:11px;font-weight:600}.card-icon{background:#f4f5f8;border-radius:7px;width:27px;height:27px;display:grid;place-items:center;color:#8b92a3}.number{font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1.25;margin:9px 0 6px}.card-note{font-size:10px;color:var(--muted)}.card-note .tag{color:var(--teal);font-weight:600;margin-right:4px}.card:last-child .number{color:var(--teal)}
+.workflow{background:#fff;border:1px solid var(--line);border-radius:12px;display:flex;align-items:center;gap:20px;padding:15px 20px;margin-bottom:22px}.workflow-label{font-size:11px;color:var(--muted);font-weight:650;white-space:nowrap}.steps{display:flex;align-items:center;flex:1;gap:12px}.step{display:flex;align-items:center;gap:7px;color:#929baa;font-size:11px;white-space:nowrap}.step i{font-style:normal;border:1px solid #dfe3eb;border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font-size:10px}.step.done{color:var(--teal)}.step.done i{background:#e9f5f1;border:0}.step.current{color:var(--indigo);font-weight:650}.step.current i{background:var(--indigo-soft);border-color:#dce0ff}.connector{flex:1;height:1px;background:var(--line);min-width:8px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 294px;gap:20px;align-items:start}.panel{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}.panel-head{padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between;gap:15px}.panel h2{font-size:14px;letter-spacing:-.2px;margin:0}.count-pill{font-size:10px;background:#f0f2f7;color:#717c90;border-radius:12px;padding:3px 8px;font-weight:500;margin-left:7px}.panel-desc{font-size:11px;color:var(--muted);margin:5px 20px 17px}.table-tools{display:flex;gap:9px;margin:17px 20px}.search{position:relative;flex:1;min-width:0}.search svg{position:absolute;left:11px;top:11px;width:14px;height:14px;color:#8c94a4}input[type=search]{width:100%;border:1px solid var(--line);border-radius:7px;padding:8px 10px 8px 33px;background:#fafbfc;font-size:11px;color:var(--ink)}select{border:1px solid var(--line);border-radius:7px;background:#fff;padding:7px 24px 7px 9px;color:#596377;font-size:11px;max-width:160px}.table-wrap{overflow:auto}
+table{border-collapse:collapse;width:100%;text-align:left;white-space:nowrap;font-size:11px}th{background:#fafbfc;color:#7f8898;font-weight:600;border-block:1px solid var(--line);padding:10px 16px;font-size:10px}td{padding:14px 16px;border-bottom:1px solid #eff1f5}tbody tr:last-child td{border-bottom:0}.request-button{border:0;padding:0;background:none;color:var(--indigo);font-size:11px;font-weight:700;display:block}.request-button:hover{text-decoration:underline}.small-subject{display:block;color:#9199a6;font-size:10px;margin-top:2px}.badge{border-radius:5px;font-size:10px;padding:3px 7px;display:inline-block;font-weight:550}.badge.soft{color:var(--muted);background:#f2f4f7}.badge.amber{color:var(--amber);background:#fcf3e3}.badge.rose{color:var(--rose);background:#fceef1}.badge.teal{color:var(--teal);background:#e9f6f2}.action-tags{display:flex;gap:4px}.total{font-weight:650}.table-foot{border-top:1px solid var(--line);padding:12px 20px;display:flex;justify-content:space-between;gap:12px;font-size:10px;color:var(--muted)}.table-foot a{color:var(--indigo);font-weight:600}.empty{padding:35px;text-align:center;color:var(--muted)}
+.right{display:flex;flex-direction:column;gap:16px}.status-box{padding:19px}.status-title{display:flex;justify-content:space-between;align-items:center}.status-box h2{font-size:13px;margin:0}.status-box p{font-size:11px;color:var(--muted);margin:10px 0 0}.decision-badge{font-size:10px;background:#fff0d8;color:var(--amber);border:1px solid #f2deb9;padding:3px 8px;border-radius:5px;font-weight:750;letter-spacing:.7px}.decision-badge.go{background:#e9f6f2;color:var(--teal);border-color:#cce9df}.progress-top{display:flex;justify-content:space-between;font-size:10px;margin:20px 0 7px;color:var(--muted)}.progress{height:5px;background:#eef0f6;border-radius:5px;overflow:hidden}.progress span{display:block;height:100%;width:{{review_progress}}%;background:var(--indigo);border-radius:5px}.review-link{margin-top:17px;font-size:11px;color:var(--indigo);font-weight:650;display:flex;justify-content:space-between}
+.distribution{padding:19px}.distribution h2{font-size:13px;margin:0 0 18px}.segment{height:9px;background:#f0f2f7;border-radius:8px;display:flex;overflow:hidden;margin-bottom:18px}.segment span{height:100%}.legend-row{display:flex;align-items:center;gap:8px;font-size:11px;margin:12px 0;color:var(--muted)}.legend-row strong{margin-left:auto;color:var(--ink);font-size:12px}.legend-row .dot{width:7px;height:7px}.info-box{padding:17px 19px;border:1px solid #dfe3f8;border-radius:12px;background:#eff1fd}.info-box strong{font-size:11px;color:#4c558e}.info-box p{font-size:11px;color:#727b9a;line-height:1.7;margin:7px 0 0}.evidence{margin-top:20px;padding:16px 20px;display:flex;justify-content:space-between;gap:20px;align-items:center}.evidence strong{font-size:12px}.evidence p{font-size:10px;color:var(--muted);margin:3px 0 0}.file-links{display:flex;gap:8px}.file-link{font-size:10px;border:1px solid var(--line);padding:6px 10px;border-radius:6px;color:#69758b;background:#fafbfc}.footer{display:flex;justify-content:space-between;gap:12px;color:#969ead;font-size:10px;margin-top:20px}.footer a{color:#76809a}
+dialog{border:1px solid var(--line);border-radius:14px;padding:0;max-width:1000px;width:calc(100% - 40px);max-height:85vh;box-shadow:0 25px 100px #17203333}dialog::backdrop{background:#18233f66;backdrop-filter:blur(3px)}.dialog-head{display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}.dialog-head h2{font-size:18px;margin:0}.dialog-head p{font-size:11px;color:var(--muted);margin:4px 0 0}.close{border:1px solid var(--line);background:#fff;width:30px;height:30px;border-radius:6px;color:var(--muted)}.dialog-body{padding:0 0 10px;overflow:auto}.dialog-body table{white-space:normal}.dialog-body td{vertical-align:top;max-width:280px;overflow-wrap:anywhere}
+@media(min-width:1600px){.main{padding:32px 48px}.grid{grid-template-columns:minmax(0,1fr) 320px}td{padding:16px 20px}.card{padding:22px 24px}h1{font-size:34px}.number{font-size:36px}}
+@media(max-width:1150px){.app{grid-template-columns:185px minmax(0,1fr)}.sidebar{padding:24px 14px}.main{padding:24px}.grid{grid-template-columns:minmax(0,1fr)}.right{display:grid;grid-template-columns:1fr 1fr}.info-box{grid-column:1/-1}.workflow{gap:12px}.workflow-label{display:none}}
+@media(max-width:760px){.app{display:block}.sidebar{position:static;height:auto;padding:16px 20px;flex-direction:row;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);border-right:0}.sidebar-caption,.sidebar nav,.project{display:none}.brand{font-size:20px}.main{padding:18px}.topline{padding-bottom:16px}.hero{align-items:flex-start;flex-direction:column;margin:22px 0}h1{font-size:27px}.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{padding:15px;min-width:0}.card-label{gap:6px}.card-icon{flex-shrink:0}.number{font-size:29px}.card-label{font-size:10px}.workflow{overflow:auto;padding:13px}.steps{min-width:480px}.right{grid-template-columns:1fr}.info-box{grid-column:auto}.evidence{align-items:flex-start;flex-direction:column;gap:12px}.footer{flex-direction:column}.table-tools{margin:14px}.panel-head{padding:17px 14px 0}.panel-desc{margin-inline:14px}.file-links{flex-wrap:wrap}.mode{font-size:10px}.breadcrumb{font-size:10px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+<a class="brand" href="dashboard.html" aria-label="Trace T08">
+<span class="brand-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 6h14M12 6v13M5 11h4M15 11h4"/><circle cx="5" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="19" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="2" fill="currentColor" stroke="none"/></svg></span>trace<span><small>T08</small></span></a>
+<p class="sidebar-caption">KHÔNG GIAN LÀM VIỆC</p>
+<nav aria-label="Điều hướng">
+<a class="nav active" href="dashboard.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Tổng quan</a>
+<a class="nav" href="review.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="m9 12 2 2 4-4M9 3h6"/></svg>Hàng duyệt<em>{{n_pending}}</em></a>
+<a class="nav" href="execution_evidence.csv" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h9l4 4v14H6zM10 11h5M10 15h5M14 3v5h5"/></svg>Bằng chứng</a>
+<a class="nav" href="audit_log.jsonl" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 11a8 8 0 1 1 2 6M4 5v6h6M12 7v5l3 2"/></svg>Nhật ký audit</a>
+</nav>
+<div class="project"><p>NGƯỜI CHỊU TRÁCH NHIỆM</p><strong>{{owner}}</strong><div class="offline"><span class="dot"></span> Hoạt động ngoại tuyến</div></div>
+</aside>
+<main class="main">
+<header class="topline"><div class="breadcrumb">Data Lab <span style="margin:0 9px;color:#b5bdc9">/</span> <span>Retention &amp; Deletion</span></div><span class="mode">◌ &nbsp; {{mode}}</span></header>
+<section class="hero"><div><p class="eyebrow">DATA GOVERNANCE · DAY 06</p><h1>Theo dõi yêu cầu xóa</h1><p class="subtitle">Tìm đủ dữ liệu liên quan. Duyệt có trách nhiệm. Giữ lại dấu vết xử lý.</p></div><a href="review.html" class="btn primary">Duyệt kế hoạch <span aria-hidden="true">↗</span></a></section>
+<section class="cards" aria-label="Số liệu tổng quan">
+<article class="card"><div class="card-label">YÊU CẦU TIẾP NHẬN <span class="card-icon">↳</span></div><div class="number">{{n_requests}}</div><div class="card-note">Từ danh sách yêu cầu đầu vào</div></article>
+<article class="card"><div class="card-label">QUYẾT ĐỊNH DỮ LIỆU <span class="card-icon">▤</span></div><div class="number">{{n_actions}}</div><div class="card-note">{{n_unique}} artefact riêng biệt</div></article>
+<article class="card"><div class="card-label">NGOẠI LỆ CẦN THEO DÕI <span class="card-icon" style="color:var(--amber);background:#fcf4e6">!</span></div><div class="number">{{n_exceptions}}</div><div class="card-note">{{n_escalate}} chuyển xử lý · {{n_hold}} legal hold</div></article>
+<article class="card"><div class="card-label">ĐÃ XÓA MÔ PHỎNG <span class="card-icon" style="color:var(--teal);background:#eaf6f2">✓</span></div><div class="number">{{n_deleted}}</div><div class="card-note"><span class="tag">{{n_delete}}</span> đề xuất xóa trong kế hoạch</div></article>
+</section>
+<section class="workflow" aria-label="Luồng xử lý"><span class="workflow-label">QUY TRÌNH</span><div class="steps">
+<div class="step done"><i>✓</i>Tiếp nhận</div><span class="connector"></span><div class="step done"><i>✓</i>Truy lineage</div><span class="connector"></span><div class="step done"><i>✓</i>Xét policy</div><span class="connector"></span><div class="step current" id="reviewStep"><i>4</i>Người duyệt</div><span class="connector"></span><div class="step" id="executeStep"><i>5</i>Thực hiện mock</div>
+</div></section>
+<div class="grid">
+<section class="panel" aria-labelledby="requestTitle">
+<div class="panel-head"><h2 id="requestTitle">Danh sách yêu cầu <span class="count-pill">{{n_requests}} yêu cầu</span></h2><a href="request_summary.csv" download class="btn" style="padding:6px 10px;font-size:10px">↓ &nbsp; Xuất CSV</a></div>
+<p class="panel-desc">Chọn mã yêu cầu để xem từng artefact và lý do xử lý.</p>
+<div class="table-tools"><div class="search"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="5"/><path d="m12 12 5 5"/></svg><input type="search" id="search" aria-label="Tìm yêu cầu hoặc subject" placeholder="Tìm mã yêu cầu hoặc subject…"></div><select id="filter" aria-label="Lọc yêu cầu"><option value="all">Tất cả yêu cầu</option><option value="exceptions">Có ngoại lệ</option><option value="pending">Chờ phê duyệt</option><option value="completed">Đã xóa mô phỏng</option></select></div>
+<div class="table-wrap"><table><thead><tr><th>YÊU CẦU / SUBJECT</th><th>HẠN XỬ LÝ</th><th>DỮ LIỆU</th><th>QUYẾT ĐỊNH</th><th>THỰC HIỆN</th></tr></thead><tbody id="requestRows"></tbody></table></div>
+<div class="table-foot"><span id="resultCount">Đang hiển thị {{n_requests}} yêu cầu</span><a href="review.html">Đến hàng duyệt →</a></div>
+<noscript><p class="empty">Bật JavaScript để xem bảng tương tác hoặc mở request_summary.csv.</p></noscript>
+</section>
+<aside class="right">
+<section class="panel status-box"><div class="status-title"><h2>Trạng thái lần chạy</h2><span id="decisionBadge" class="decision-badge">{{decision}}</span></div><p>{{decision_reason}}</p><div class="progress-top"><span>Đã có quyết định người duyệt</span><strong>{{n_reviewed}} / {{n_actions}}</strong></div><div class="progress" role="progressbar" aria-label="Tiến độ duyệt" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{review_progress}}"><span></span></div><a class="review-link" href="review.html">Tiếp tục duyệt kế hoạch <span>→</span></a></section>
+<section class="panel distribution"><h2>Phân bổ quyết định</h2><div class="segment" id="distribution" aria-hidden="true"></div>
+<div class="legend-row"><span class="dot" style="color:#8389dc"></span>Đề xuất xóa<strong>{{n_delete}}</strong></div>
+<div class="legend-row"><span class="dot" style="color:#e4b461"></span>Chuyển người xử lý<strong>{{n_escalate}}</strong></div>
+<div class="legend-row"><span class="dot" style="color:#cc8292"></span>Giữ theo legal hold<strong>{{n_hold}}</strong></div></section>
+<section class="info-box"><strong>ⓘ &nbsp; Phạm vi của lần chạy</strong><p>Chỉ xử lý dữ liệu mô phỏng. Các số liệu phản ánh hoạt động của pipeline, chưa phải điểm chấm từ ground truth giảng viên.</p></section>
+</aside>
+</div>
+<section class="panel evidence"><div><strong>Bằng chứng cho từng quyết định</strong><p>Đối chiếu kế hoạch, trạng thái thực hiện và nhật ký sau mỗi lần chạy.</p></div><div class="file-links"><a class="file-link" href="actions.csv" download>↧ &nbsp; Quyết định CSV</a><a class="file-link" href="execution_evidence.csv" download>↧ &nbsp; Thực hiện CSV</a><a class="file-link" href="audit_log.jsonl" download>↧ &nbsp; Audit JSONL</a></div></section>
+<footer class="footer"><span>TRACE / T08 &nbsp;·&nbsp; Mô phỏng vòng đời dữ liệu</span><span>Phụ trách: {{owner}} &nbsp;·&nbsp; <a href="summary.json" download>Tải dữ liệu tổng hợp ↗</a></span></footer>
+</main></div>
+<dialog id="detailDialog" aria-labelledby="detailTitle"><div class="dialog-head"><div><h2 id="detailTitle"></h2><p id="detailSubtitle"></p></div><button class="close" id="closeDetail" aria-label="Đóng chi tiết">✕</button></div><div class="dialog-body"><table><thead><tr><th>Artefact</th><th>Loại dữ liệu</th><th>Quyết định</th><th>Lý do</th><th>Thực hiện</th></tr></thead><tbody id="detailRows"></tbody></table></div></dialog>
+<script id="run-data" type="application/json">{{payload}}</script>
+<script>
+const run=JSON.parse(document.getElementById('run-data').textContent);
+const requests=run.summary.requests||[];
+const labels={delete:'Đề xuất xóa',escalate:'Chuyển xử lý',retain_legal_hold:'Giữ theo hold'};
+const statuses={pending_approval:'Chờ duyệt',planned_delete:'Đã lập kế hoạch',deleted:'Đã xóa mock',already_deleted:'Đã xóa trước đó',retained:'Đã giữ lại',escalated:'Chuyển xử lý',blocked_conflicting_request:'Xung đột'};
+const reasons={LEGAL_HOLD:'Đang có legal hold',NO_PERMISSION:'Thiếu quyền thực hiện',UNKNOWN_ORIGIN:'Chưa rõ nguồn dữ liệu',MISSING_PARENT:'Thiếu bản ghi cha',SUBJECT_UNCONFIRMED:'Chưa xác nhận chủ thể',MULTI_SUBJECT:'Có nhiều chủ thể',IDENTITY_UNVERIFIED:'Yêu cầu chưa xác minh',SINGLE_SUBJECT_AUTHORIZED:'Một chủ thể, đủ quyền'};
+function element(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n}
+function badge(text,kind){return element('span',text,'badge '+kind)}
+function openRequest(r){
+ document.getElementById('detailTitle').textContent=r.request_id;
+ document.getElementById('detailSubtitle').textContent=r.subject_id+' · '+r.n_artefacts+' artefact liên quan';
+ const body=document.getElementById('detailRows');body.replaceChildren();
+ for(const row of run.rows.filter(x=>x.request_id===r.request_id)){
+ const tr=element('tr');tr.append(element('td',row.artefact_id),element('td',row.artefact_type));
+ const action=element('td');action.append(badge(labels[row.action]||row.action,row.action==='delete'?'teal':row.action==='escalate'?'amber':'rose'));tr.append(action);
+ tr.append(element('td',reasons[row.reason_code]||row.reason_code),element('td',statuses[row.execution_status]||row.execution_status));body.append(tr)}
+ document.getElementById('detailDialog').showModal();
+}
+function render(){
+ const query=document.getElementById('search').value.trim().toLowerCase(), filter=document.getElementById('filter').value;
+ const selected=requests.filter(r=>{
+ const a=r.action_counts||{},e=r.execution_counts||{};
+ return (r.request_id+' '+r.subject_id).toLowerCase().includes(query)
+ &&(filter==='all'||filter==='exceptions'&&((a.escalate||0)+(a.retain_legal_hold||0)>0)
+ ||filter==='pending'&&(e.pending_approval||0)>0||filter==='completed'&&((e.deleted||0)+(e.already_deleted||0)>0))});
+ const body=document.getElementById('requestRows');body.replaceChildren();
+ for(const r of selected){
+ const a=r.action_counts||{},e=r.execution_counts||{},tr=element('tr'),id=element('td'),button=element('button',r.request_id,'request-button');button.type='button';button.onclick=()=>openRequest(r);id.append(button,element('span',r.subject_id,'small-subject'));tr.append(id);
+ // Display the stated calendar deadline; do not shift its date through browser timezone conversion.
+ const date=String(r.deadline||'').slice(0,10).split('-').reverse().join('/');
+ tr.append(element('td',date||'—'),element('td',r.n_artefacts,'total'));
+ const actions=element('td'),tags=element('div',undefined,'action-tags');
+ if(a.delete)tags.append(badge(a.delete+' xóa','teal'));
+ if(a.escalate)tags.append(badge(a.escalate+' chuyển','amber'));
+ if(a.retain_legal_hold)tags.append(badge(a.retain_legal_hold+' giữ','rose'));
+ actions.append(tags);tr.append(actions);
+ const status=element('td');
+ if(e.pending_approval)status.append(badge(e.pending_approval+' chờ duyệt','soft'));
+ else if(e.planned_delete)status.append(badge('Đã lập kế hoạch','soft'));
+ else if((e.deleted||0)+(e.already_deleted||0))status.append(badge('Đã thực hiện mock','teal'));
+ else status.append(badge('Cần theo dõi','amber'));
+ tr.append(status);body.append(tr)}
+ if(!selected.length){const tr=element('tr'),td=element('td','Không tìm thấy yêu cầu phù hợp.','empty');td.colSpan=5;tr.append(td);body.append(tr)}
+ document.getElementById('resultCount').textContent='Hiển thị '+selected.length+' / '+requests.length+' yêu cầu';
+}
+document.getElementById('search').addEventListener('input',render);
+document.getElementById('filter').addEventListener('change',render);
+document.getElementById('closeDetail').onclick=()=>document.getElementById('detailDialog').close();
+document.getElementById('detailDialog').addEventListener('click',e=>{if(e.target===e.currentTarget){const r=e.currentTarget.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.currentTarget.close()}});
+const distribution=document.getElementById('distribution'),total=run.summary.n_actions||0;
+for(const [key,color]of [['delete','#8389dc'],['escalate','#e4b461'],['retain_legal_hold','#cc8292']]){
+ const bar=element('span');bar.style.width=(total?100*(run.summary.action_counts[key]||0)/total:0)+'%';bar.style.background=color;distribution.append(bar)}
+if(run.decision.status==='GO')document.getElementById('decisionBadge').classList.add('go');
+if(run.summary.n_actions>0&&run.n_reviewed>=run.summary.n_actions){
+ document.getElementById('reviewStep').classList.remove('current');document.getElementById('reviewStep').classList.add('done')}
+if(run.summary.mode==='mock_execute'&&!(run.summary.execution_counts.pending_approval||0)){
+ document.getElementById('executeStep').classList.add('done')}
+render();
+</script>
+</body></html>

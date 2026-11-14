@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "method": "Isolated headless Chrome with CDP",
+  "desktop": {
+    "viewport": 1440,
+    "content": 1425
+  },
+  "mobile": {
+    "viewport": 430,
+    "content": 415
+  },
+  "requests": 10,
+  "review_rows": 158,
+  "search_and_detail": true,
+  "console_exceptions": []
+}

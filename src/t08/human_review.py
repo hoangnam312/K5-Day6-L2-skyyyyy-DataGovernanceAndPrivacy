@@ -27,20 +27,28 @@ def render_review_html(queue: pd.DataFrame, path: Path) -> None:
     headers = json.dumps(list(queue.columns))
     template = """<!doctype html><html lang="vi"><meta charset="utf-8">
 <title>T08 — Human review</title><style>
-body{font:15px system-ui;margin:24px;background:#f5f7fa;color:#182231}
-table{border-collapse:collapse;background:white;width:100%}td,th{border:1px solid #ccd4df;padding:8px;text-align:left}
-thead{position:sticky;top:0;background:#e0eafa}input,select,button{padding:7px;margin:4px}
-.top{position:sticky;top:0;background:#f5f7fa;padding:10px;border-bottom:2px solid #667}
-</style><h1>T08 — Duyệt kế hoạch xóa mô phỏng</h1>
+*{box-sizing:border-box}body{font:13px/1.6 'Segoe UI',Arial,sans-serif;margin:0;padding:28px 36px;background:#f5f6f8;color:#202939}
+nav{display:flex;justify-content:space-between;align-items:center;padding-bottom:20px;border-bottom:1px solid #e0e4ed;margin-bottom:26px}
+nav strong{font-size:20px;letter-spacing:-.6px;color:#4c54d8}nav a{color:#687388;text-decoration:none;font-size:12px}
+h1{font-size:28px;letter-spacing:-.7px;margin:0 0 8px}body>p{color:#6b7485;font-size:12px;max-width:840px;margin-bottom:22px}
+.table-wrap{overflow:auto;border:1px solid #e6e9ef;border-radius:10px;background:#fff}
+table{border-collapse:collapse;background:white;width:100%;min-width:1000px;font-size:11px}td,th{border-bottom:1px solid #edf0f5;padding:12px 14px;text-align:left;vertical-align:middle}
+th{background:#fafbfc;color:#7f8898;font-size:10px;font-weight:650;letter-spacing:.3px}td:first-child{font-weight:600;color:#4c54d8;white-space:nowrap}td:nth-child(3){color:#858fa0;max-width:230px;overflow-wrap:anywhere}
+input,select,button{font:inherit;border:1px solid #dfe4ed;border-radius:7px;padding:8px 10px;background:#fff;color:#3c485d}input:focus,select:focus{outline:2px solid #c4c9fb;outline-offset:1px}
+td input{width:100%;min-width:130px}td select{width:100%;min-width:110px}button{cursor:pointer;font-weight:600;font-size:12px}button:hover{filter:brightness(.97)}
+.top{position:sticky;top:0;z-index:2;background:#fff;padding:16px 18px;border:1px solid #e6e9ef;border-radius:10px;margin:0 0 18px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;box-shadow:0 4px 16px #25304906}
+.top label{font-size:11px;font-weight:600;color:#667387}.top input{margin-left:9px;min-width:210px}#export{background:#4c54d8;color:#fff;border-color:#4c54d8}#approve{color:#4c54d8;background:#eef0ff;border-color:#dfe2ff}#status{font-size:11px;color:#178577}
+@media(max-width:760px){body{padding:18px}h1{font-size:24px}.top{position:static}.top label,.top input{display:block;width:100%;margin:3px 0}.top button{flex:1}}
+</style><nav><strong>trace <small style="font-size:12px;font-weight:500;color:#929bab">/ T08</small></strong><a href="dashboard.html">← Về tổng quan</a></nav><h1>Duyệt kế hoạch xóa</h1>
 <p>Chưa có dữ liệu thật bị xóa. Chọn quyết định, nhập tên và xuất CSV.
 Approve giữ hành động đề xuất; edit/reject cần override và ghi chú.
 Policy chặn xóa không được vượt qua bằng CSV.</p>
 <div class="top"><label>Người duyệt <input id="who" placeholder="Tên người thực sự duyệt"></label>
 <button id="approve">Approve tất cả delete an toàn</button>
 <button id="export">Xuất review_queue_reviewed.csv</button>
-<span id="status"></span></div><table><thead><tr>
+<span id="status" role="status"></span></div><div class="table-wrap"><table><thead><tr>
 <th>ID</th><th>Đề xuất / lý do</th><th>Evidence</th><th>Quyết định</th><th>Override</th><th>Ghi chú</th>
-</tr></thead><tbody id="rows"></tbody></table><script>
+</tr></thead><tbody id="rows"></tbody></table></div><script>
 const data=__DATA__, headers=__HEADERS__;
 function select(options,value){let s=document.createElement('select');for(let v of options){
 let o=document.createElement('option');o.value=v;o.textContent=v||'(chưa chọn)';s.append(o)}s.value=value||'';return s}

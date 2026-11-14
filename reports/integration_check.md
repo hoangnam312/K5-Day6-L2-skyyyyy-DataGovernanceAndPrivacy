@@ -36,3 +36,17 @@ definitions were not changed. Git attributes preserve those bytes on later clone
 
 Official class-fixture scores remain unavailable until instructor GT is supplied.
 Human review and the demo presentation still need to be performed by the team.
+
+## Dashboard UI follow-up
+
+- Replaced the raw JSON page with an offline dashboard and embedded CSS.
+- Added request search/filter, an artefact detail dialog, output links and clear
+  separation of proposed actions from completed mock execution.
+- Review page CSS aligned with the dashboard.
+- Full tests after UI changes: **72 passed, 39 skipped** (9.09 s).
+- Real isolated headless Chrome smoke test passed: 10 requests, 158 review rows,
+  search/detail interaction, no runtime exceptions. Desktop viewport 1440 px,
+  mobile viewport 430 px; neither had page-level horizontal overflow.
+- Desktop/mobile/review/detail screenshots were visually inspected locally.
+- Re-run: node tools/check_dashboard_browser.cjs. Result metadata is in
+  reports/dashboard_browser_check.json; screenshots stay in ignored out/poc/.

@@ -1,17 +1,11 @@
-# ============================================================
-# Group config — EDIT ME (one per group). Values here override
-# the track defaults loaded from `track_config`.
-# ============================================================
-group_id: skyyyy                     # e.g. G07
-owner: "Dương Quốc Anh"   # mandatory for every Decision
-track_config: tracks/t08.yaml     # pick your challenge: tracks/t01.yaml ... tracks/t14.yaml
-track: t08                        # must match track_config
-input: fixtures/t08_raw_qc        # or data/real/... if your instructor provided a real pack
->>>>>>> 6b91d30 (Configure T08 deletion track)
+group_id: skyyyy
+owner: "Dương Quốc Anh"
+track_config: tracks/t08.yaml
+track: t08
+input: fixtures/t08_deletion
 output: out/
 seed: 42
-offline: true                     # demo/eval must not touch the network
-strict_provenance: true           # fail if manifest.csv hashes do not match
+offline: true
+strict_provenance: true
 
-# Track params (merged over track_config.params). Freeze before evaluation.
 params: {}
